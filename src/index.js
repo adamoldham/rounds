@@ -69,6 +69,8 @@ table.data{border-collapse:collapse;width:100%;font-size:.92rem}
 .data td.ok{background:color-mix(in srgb,var(--good) 14%,var(--bg))}
 .data td.bad{background:color-mix(in srgb,var(--bad) 13%,var(--bg))}
 .status{color:var(--ink-soft);margin:12px 0}
+.signout{font-size:.875rem;color:var(--ink-soft)}
+.tok{display:block;width:100%;font:inherit;font-size:1rem;padding:11px 12px;margin:10px 0;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
 .notice{margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:6px;background:var(--bg-soft);font-size:.9rem}
 .notice ul{margin:0;padding-left:18px}
 footer{margin-top:40px;border-top:1px solid var(--line);padding:18px 0 32px;color:var(--ink-soft);font-size:.85rem}
@@ -228,14 +230,60 @@ async function tapPost(req, env) {
   }
 }
 
+// ADMIN_TOKEN may hold several tokens separated by commas, so a temporary one can be added and removed later.
+const tokenList = (env) => (env.ADMIN_TOKEN || "").split(",").map((t) => t.trim()).filter(Boolean);
+const validToken = (env, t) => !!t && tokenList(env).some((x) => safeEqual(t, x));
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+async function validCookie(env, req) {
+  const c = getCookie(req, "adm");
+  if (!c) return false;
+  for (const x of tokenList(env)) if (safeEqual(c, await sha256(x))) return true;
+  return false;
+}
+
+const ADM_COOKIE = "Path=/admin; Secure; HttpOnly; SameSite=Strict";
+
+async function sessionCookie(token) {
+  return `adm=${await sha256(token)}; Max-Age=2592000; ${ADM_COOKIE}`;
+}
+
+function loginPage(error) {
+  return html(
+    `<p class="eyebrow">Night rounds</p><h1>Sign in</h1><p class="lead">${error ? esc(error) : "Enter the admin token."}</p>
+<form method="post" action="/admin"><input class="tok" type="password" name="token" autocomplete="current-password" autofocus required>
+<button class="primary" type="submit">Open report</button></form>`,
+    error ? 401 : 200
+  );
+}
+
 async function admin(req, env, url) {
-  const token = url.searchParams.get("token") || "";
-  if (!env.ADMIN_TOKEN || !safeEqual(token, env.ADMIN_TOKEN)) return new Response("Not found", { status: 404 });
+  if (url.searchParams.get("logout")) {
+    return new Response(null, { status: 302, headers: { location: "/admin", "set-cookie": `adm=; Max-Age=0; ${ADM_COOKIE}` } });
+  }
+
+  // Signing in with a token: from the form, or from an older ?token= link (accepted once, then removed from the URL).
+  let submitted = url.searchParams.get("token");
+  if (req.method === "POST") submitted = String((await req.formData()).get("token") || "").trim();
+  if (submitted !== null) {
+    if (validToken(env, submitted)) {
+      const night = url.searchParams.get("night");
+      const dest = night && /^\d{4}-\d{2}-\d{2}$/.test(night) ? `/admin?night=${night}` : "/admin";
+      return new Response(null, { status: 303, headers: { location: dest, "set-cookie": await sessionCookie(submitted) } });
+    }
+    await new Promise((r) => setTimeout(r, 700)); // slow down guessing
+    return loginPage("That token did not work.");
+  }
+  if (!(await validCookie(env, req))) return loginPage();
 
   const q = url.searchParams.get("night") || "";
   const night = /^\d{4}-\d{2}-\d{2}$/.test(q) ? q : timeInfo(Date.now()).night;
   const shift = (n) => new Date(Date.parse(night + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
-  const link = (n) => `/admin?token=${encodeURIComponent(token)}&night=${n}`;
+  const link = (n) => `/admin?night=${n}`;
 
   const taps = (await env.DB.prepare("SELECT * FROM taps WHERE night=? ORDER BY ts").bind(night).all()).results;
   const stickers = (await env.DB.prepare("SELECT location,building FROM stickers ORDER BY building,location").all()).results;
@@ -283,7 +331,7 @@ async function admin(req, env, url) {
   return html(
     `<h1>Night rounds</h1>
 <p class="meta">Night of ${esc(pretty)}</p>
-<div class="toolbar"><div class="seg"><a href="${link(shift(-1))}">Previous night</a><a href="${link(shift(1))}">Next night</a></div></div>
+<div class="toolbar"><div class="seg"><a href="${link(shift(-1))}">Previous night</a><a href="${link(shift(1))}">Next night</a></div><a class="signout" href="/admin?logout=1">Sign out</a></div>
 <div class="section-head"><h2>Rounds</h2></div>
 <div class="data-wrap"><table class="data"><thead><tr><th>RA</th><th>Building</th><th>Round 1</th><th>Round 2</th></tr></thead><tbody>${rows}</tbody></table></div>
 <div class="section-head"><h2>Flags</h2></div>

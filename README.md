@@ -20,7 +20,7 @@ Older `?id=`, `?u=...&c=...` formats are also accepted.
 1. Create the tables: paste `schema.sql` into the D1 console for `rounds-db`.
 2. Add staff and stickers: copy `seed.example.sql`, fill it in, paste it into the console.
 3. Set a Worker secret named `ADMIN_TOKEN` (Worker > Settings > Variables and Secrets) to a long random string.
-4. Report page: `https://rounds.adamoldham.com/admin?token=<ADMIN_TOKEN>`
+4. Report page: `https://rounds.adamoldham.com/admin`. Enter the token on the sign-in form (the session lasts 30 days on that browser). `ADMIN_TOKEN` can hold several tokens separated by commas, so a temporary token can be added for someone and removed later; removing it signs that person out. An old `?token=` link still works once, then the token is dropped from the URL.
 
 ## Behavior
 
