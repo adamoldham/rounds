@@ -9,26 +9,94 @@ const NIGHT_END = 30 * 60; // 6:00 AM
 const FRESH_MS = 120000; // time allowed between the tap and choosing a name
 const FAST_GAP_SECONDS = 25; // flag different floors tapped faster than this
 
+// Look and feel copied from the sra.adamoldham.com site: same tokens, light/dark mode, 6px cards.
+const THEME_JS = `(function(){var r=document.documentElement,K="theme";function sv(){try{var v=localStorage.getItem(K);return v==="light"||v==="dark"?v:null}catch(e){return null}}
+function ef(){var t=r.getAttribute("data-theme");return t||(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}
+var s=sv();if(s)r.setAttribute("data-theme",s);
+function lb(b){var d=ef()==="dark";b.textContent=d?"\\u2600":"\\u263E";b.setAttribute("aria-label",d?"Switch to light mode":"Switch to dark mode")}
+document.addEventListener("DOMContentLoaded",function(){var n=document.querySelector(".site-nav");if(!n)return;var b=document.createElement("button");b.type="button";b.className="theme-toggle";lb(b);
+b.addEventListener("click",function(){var x=ef()==="dark"?"light":"dark";r.setAttribute("data-theme",x);try{localStorage.setItem(K,x)}catch(e){}lb(b)});n.appendChild(b)})})();`;
+
 const STYLE = `
-body{font-family:system-ui,sans-serif;max-width:30rem;margin:0 auto;padding:1rem;line-height:1.4}
-select,button{font-size:1.1rem;width:100%;padding:.7rem;margin:.5rem 0}
-.wide{max-width:60rem}table{border-collapse:collapse;width:100%}
-td,th{border:1px solid #ccc;padding:.35rem;text-align:left;vertical-align:top}
-.ok{background:#e6f4ea}.bad{background:#fde7e9}small{color:#555}`;
+:root{--bg:#ffffff;--bg-soft:#f6f6f7;--line:#e3e3e7;--ink:#17171a;--ink-soft:#62626b;--accent:#4f2d7f;--on-accent:#ffffff;--good:#1e7a3c;--bad:#b3261e;color-scheme:light dark}
+:root[data-theme="light"]{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101012;--bg-soft:#18181b;--line:#2b2b31;--ink:#ededf0;--ink-soft:#9e9ea8;--accent:#b99be6;--on-accent:#101012;--good:#6fcf8f;--bad:#f2857d}}
+:root[data-theme="dark"]{--bg:#101012;--bg-soft:#18181b;--line:#2b2b31;--ink:#ededf0;--ink-soft:#9e9ea8;--accent:#b99be6;--on-accent:#101012;--good:#6fcf8f;--bad:#f2857d}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+/* tap pages: centered card like the 404 page */
+.card{min-height:calc(100vh - 24px);min-height:calc(100dvh - 24px);margin:12px;border:1px solid var(--line);border-radius:6px;background:var(--bg-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;position:relative}
+.center{width:100%;max-width:420px}
+.center h1{margin:0;font-size:clamp(40px,12vw,84px);line-height:1.05;font-weight:600;color:var(--ink);letter-spacing:-.02em;overflow-wrap:anywhere}
+.eyebrow{margin:0 0 10px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.lead{margin:12px 0 22px;font-size:clamp(16px,4.5vw,20px);color:var(--ink-soft)}
+.lead b{color:var(--ink)}
+.pill{display:inline-block;margin:0;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-size:.9rem;color:var(--ink-soft)}
+.pill.warn{border-color:var(--bad);color:var(--bad)}
+.center select,.center .primary{display:block;width:100%;font:inherit;font-size:1rem;border-radius:4px;margin:10px 0}
+.center select{padding:11px 12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.primary{padding:11px 22px;border:0;background:var(--accent);color:var(--on-accent);font-weight:600;cursor:pointer}
+.primary:hover{filter:brightness(1.1)}
+.foot-card{position:absolute;bottom:16px;left:0;right:0;font-size:13px;color:var(--ink-soft)}
+/* report page: same header, headings and tables as the duty site */
+.site-header{border-bottom:1px solid var(--line)}
+.site-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:60px;flex-wrap:wrap}
+.brand{font-weight:600;text-decoration:none;color:var(--ink)}
+.brand small{display:block;font-weight:400;font-size:.78rem;color:var(--ink-soft)}
+.site-nav{display:flex;gap:20px}
+.theme-toggle{align-self:center;margin-left:4px;width:32px;height:32px;padding:0;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-soft);font:inherit;font-size:16px;line-height:1;cursor:pointer}
+.theme-toggle:hover{color:var(--ink);background:var(--bg-soft)}
+main{padding:32px 0 24px}
+h1{font-size:1.5rem;line-height:1.25;margin:0 0 6px;font-weight:600;letter-spacing:-.005em}
+.meta{color:var(--ink-soft);font-size:.9rem;margin:0}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:24px 0 8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg a{font-size:.875rem;padding:6px 14px;background:var(--bg);color:var(--ink-soft);text-decoration:none}
+.seg a+a{border-left:1px solid var(--line)}
+.seg a:hover{color:var(--ink);background:var(--bg-soft)}
+.section-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:32px 0 12px}
+.section-head h2{font-size:1.15rem;line-height:1.3;margin:0;font-weight:600}
+.data-wrap{border:1px solid var(--line);border-radius:6px;overflow:auto;background:var(--bg)}
+table.data{border-collapse:collapse;width:100%;font-size:.92rem}
+.data th,.data td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.data tbody tr:last-child td{border-bottom:0}
+.data thead th{background:var(--bg-soft);font-weight:600}
+.data td small{display:block;color:var(--ink-soft)}
+.data td.ok{background:color-mix(in srgb,var(--good) 14%,var(--bg))}
+.data td.bad{background:color-mix(in srgb,var(--bad) 13%,var(--bg))}
+.status{color:var(--ink-soft);margin:12px 0}
+.notice{margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:6px;background:var(--bg-soft);font-size:.9rem}
+.notice ul{margin:0;padding-left:18px}
+footer{margin-top:40px;border-top:1px solid var(--line);padding:18px 0 32px;color:var(--ink-soft);font-size:.85rem}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px}
+.foot-links{display:flex;gap:16px}
+.foot-links a{color:var(--ink-soft)}
+.foot-links a:hover{color:var(--ink)}
+@media (max-width:640px){.wrap{padding:0 14px}h1{font-size:1.35rem}}`;
+
+const FOOTER = `<footer><div class="wrap foot"><span>&copy; Adam Oldham 2026</span><span class="foot-links"><a href="https://www.adamoldham.com/privacy">Privacy</a><a href="https://www.adamoldham.com/terms">Terms</a></span></div></footer>`;
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// wide = false: centered card for the sticker tap pages. wide = true: full report layout with header and footer.
 function html(body, status = 200, headers = {}, wide = false) {
-  const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rounds</title><style>${STYLE}</style></head><body${wide ? ' class="wide"' : ""}>${body}</body></html>`;
+  const shell = wide
+    ? `<header class="site-header"><div class="wrap"><div class="brand">Reslife Resources<small>Night rounds</small></div><nav class="site-nav" aria-label="Main"></nav></div></header><main><div class="wrap">${body}</div></main>${FOOTER}`
+    : `<div class="card"><div class="center">${body}</div><div class="foot-card">&copy; Adam Oldham 2026</div></div>`;
+  const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Night rounds | Reslife Resources</title><meta name="robots" content="noindex"><script>${THEME_JS}</script><style>${STYLE}</style></head><body>${shell}</body></html>`;
   return new Response(page, {
     status,
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", ...headers },
   });
 }
 
-const msg = (title, text) => `<h1>${esc(title)}</h1><p>${esc(text)}</p>`;
+const msg = (title, text) => `<h1>${esc(title)}</h1><p class="lead">${esc(text)}</p>`;
 
 function getCookie(req, name) {
   const m = (req.headers.get("cookie") || "").match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
@@ -63,7 +131,7 @@ function timeInfo(ms) {
 
 function confirmation(name, st, ti) {
   const r = ti.round ? `Round ${ti.round}` : "Outside the round window (not counted)";
-  return `<h1>Recorded</h1><p><b>${esc(name)}</b></p><p>${esc(st.location)}</p><p>${esc(ti.label)}, ${esc(r)}</p>`;
+  return `<p class="eyebrow">&#10003; Recorded</p><h1>${esc(st.location)}</h1><p class="lead"><b>${esc(name)}</b></p><p class="pill${ti.round ? "" : " warn"}">${esc(ti.label)} &middot; ${esc(r)}</p>`;
 }
 
 async function recordTap(env, req, st, name, did, ctr, now) {
@@ -125,10 +193,10 @@ async function tapGet(req, env, url) {
   const options = staff.map((s) => `<option>${esc(s.name)}</option>`).join("");
   const c = tag.ctr.toString(16).toUpperCase().padStart(6, "0");
   return html(
-    `<h1>${esc(st.location)}</h1><p>Choose your name. This phone will be linked to it.</p>
+    `<p class="eyebrow">Night rounds</p><h1>${esc(st.location)}</h1><p class="lead">Choose your name. This phone will be linked to it.</p>
 <form method="post" action="/tap"><input type="hidden" name="u" value="${tag.u}"><input type="hidden" name="c" value="${c}">
 <select name="name" required><option value="">Select your name</option>${options}</select>
-<button type="submit">Record</button></form>`
+<button class="primary" type="submit">Record</button></form>`
   );
 }
 
@@ -211,12 +279,17 @@ async function admin(req, env, url) {
     `<tr><td>${esc(timeInfo(Date.parse(t.ts)).label)}</td><td>${esc(t.name)}</td><td>${esc(t.location)}</td><td>${t.round || "-"}</td><td>${esc(t.ip)}</td></tr>`
   ).join("");
 
+  const pretty = new Date(night + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
   return html(
-    `<h1>Rounds for night of ${esc(night)}</h1>
-<p><a href="${link(shift(-1))}">Previous night</a> | <a href="${link(shift(1))}">Next night</a></p>
-<table><tr><th>RA</th><th>Building</th><th>Round 1</th><th>Round 2</th></tr>${rows}</table>
-<h2>Flags</h2>${flags.length ? "<ul>" + flags.map((f) => `<li>${esc(f)}</li>`).join("") + "</ul>" : "<p>None</p>"}
-<h2>All taps</h2><table><tr><th>Time</th><th>RA</th><th>Location</th><th>Round</th><th>IP</th></tr>${raw}</table>`,
+    `<h1>Night rounds</h1>
+<p class="meta">Night of ${esc(pretty)}</p>
+<div class="toolbar"><div class="seg"><a href="${link(shift(-1))}">Previous night</a><a href="${link(shift(1))}">Next night</a></div></div>
+<div class="section-head"><h2>Rounds</h2></div>
+<div class="data-wrap"><table class="data"><thead><tr><th>RA</th><th>Building</th><th>Round 1</th><th>Round 2</th></tr></thead><tbody>${rows}</tbody></table></div>
+<div class="section-head"><h2>Flags</h2></div>
+${flags.length ? '<div class="notice"><ul>' + flags.map((f) => `<li>${esc(f)}</li>`).join("") + "</ul></div>" : '<p class="status">None</p>'}
+<div class="section-head"><h2>All taps</h2></div>
+<div class="data-wrap"><table class="data"><thead><tr><th>Time</th><th>RA</th><th>Location</th><th>Round</th><th>IP</th></tr></thead><tbody>${raw || '<tr><td colspan="5">No taps yet</td></tr>'}</tbody></table></div>`,
     200, {}, true
   );
 }
