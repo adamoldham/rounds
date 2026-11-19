@@ -1,5 +1,5 @@
 // Night rounds checkpoint logger. Stickers are NTAG21x tags that mirror their
-// UID and tap counter into the URL: /tap?u=<14 hex>&c=<6 hex>
+// UID and tap counter into the URL: /tap?id=<14 hex>x<6 hex> (or u= and c= separately)
 
 const TZ = "America/New_York";
 // Minutes since 00:00 of the evening a duty night starts. After midnight counts as +24h.
@@ -84,8 +84,18 @@ function parseTag(u, c) {
   return { u, ctr: parseInt(c, 16) };
 }
 
+// Accepts /tap?id=<UID>x<COUNTER> (both mirrors back to back) or /tap?u=<UID>&c=<COUNTER>.
+function tagFromUrl(url) {
+  const id = (url.searchParams.get("id") || "").toUpperCase();
+  if (id) {
+    const m = id.match(/^([0-9A-F]{14})X([0-9A-F]{6})$/);
+    return m ? parseTag(m[1], m[2]) : null;
+  }
+  return parseTag(url.searchParams.get("u"), url.searchParams.get("c"));
+}
+
 async function tapGet(req, env, url) {
-  const tag = parseTag(url.searchParams.get("u"), url.searchParams.get("c"));
+  const tag = tagFromUrl(url);
   if (!tag) return html(msg("Invalid link", "Tap the sticker again."), 400);
   if (/^0+$/.test(tag.u)) return html(msg("Sticker not set up", "The UID mirror is not enabled on this sticker."), 400);
   if (tag.ctr === 0) return html(msg("Tap again", "The counter read 0. If this keeps happening, the counter mirror is not enabled."), 400);
