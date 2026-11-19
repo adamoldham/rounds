@@ -8,6 +8,7 @@ const ROUND1_END = 24 * 60 + 30; // 12:30 AM, split between round 1 and round 2
 const NIGHT_END = 30 * 60; // 6:00 AM
 const FRESH_MS = 120000; // time allowed between the tap and choosing a name
 const FAST_GAP_SECONDS = 25; // flag different floors tapped faster than this
+const REPEAT_FLAG_MIN = 2; // flag a sticker tapped this many times by one RA in one round
 
 // Look and feel copied from the sra.adamoldham.com site: same tokens, light/dark mode, 6px cards.
 const THEME_JS = `(function(){var r=document.documentElement,K="theme";function sv(){try{var v=localStorage.getItem(K);return v==="light"||v==="dark"?v:null}catch(e){return null}}
@@ -322,6 +323,16 @@ async function admin(req, env, url) {
         flags.push(`${name}: ${ts[i - 1].location} to ${ts[i].location} in ${Math.round(gap)}s`);
       }
     }
+  }
+
+  // Taps outside round hours, and the same sticker tapped repeatedly by one RA in one round.
+  const groups = {};
+  for (const t of taps) (groups[`${t.name}|${t.location}|${t.round}`] ||= []).push(t);
+  for (const g of Object.values(groups)) {
+    const times = g.map((t) => timeInfo(Date.parse(t.ts)).label.split(" ")[1]).join(", ");
+    const { name, location, round } = g[0];
+    if (!round) flags.push(`${name}: ${location} tapped ${g.length} time${g.length > 1 ? "s" : ""} outside round hours (${times})`);
+    else if (g.length >= REPEAT_FLAG_MIN) flags.push(`${name}: ${location} tapped ${g.length} times in round ${round} (${times})`);
   }
 
   const raw = taps.map((t) =>
