@@ -1,0 +1,13 @@
+name = "rounds"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = false
+
+routes = [
+  { pattern = "rounds.adamoldham.com", custom_domain = true }
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rounds-db"
+database_id = "37ae55b3-7613-4d8b-afe1-b21dce7603e8"
