@@ -4,15 +4,16 @@ Cloudflare Worker + D1 that logs RA night-round checkpoint taps from NTAG21x sti
 
 ## Sticker URL
 
-Write each sticker with NXP TagWriter as a Link (leave the description empty, since a description
-breaks iPhone background reading) with this URL:
+In NXP TagWriter: Write tags > New dataset > Link. Leave the description empty (a description breaks
+iPhone background reading). URI type `https://`, address:
 
-    https://rounds.adamoldham.com/tap?id=
+    rounds.adamoldham.com/tap
 
-Turn on the interaction counter, the UID mirror and the interaction counter mirror in the editor.
-The app places the mirror at the end of the URL, so a tap opens
-`/tap?id=<14 hex UID>x<6 hex counter>`. Lock the tag with a write-only password last.
-Write tags one at a time, not from a CSV import. The older `?u=...&c=...` format is also accepted.
+Do not add a `?` yourself. Tap **Configure Mirroring Options**, pick the NTAG215 card type, enable UID
+mirroring and counter mirroring, then Save & Write. TagWriter appends the mirror to the link, so a tap
+opens `/tap?UID=<14 hex UID>x<6 hex counter>`. Write tags one at a time, not from a CSV import.
+Set a password during the write only after the plain scan works, and re-test after.
+Older `?id=`, `?u=...&c=...` formats are also accepted.
 
 ## Setup
 

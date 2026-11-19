@@ -1,5 +1,5 @@
 // Night rounds checkpoint logger. Stickers are NTAG21x tags that mirror their
-// UID and tap counter into the URL: /tap?id=<14 hex>x<6 hex> (or u= and c= separately)
+// UID and tap counter into the URL: /tap?UID=<14 hex>x<6 hex>
 
 const TZ = "America/New_York";
 // Minutes since 00:00 of the evening a duty night starts. After midnight counts as +24h.
@@ -84,14 +84,14 @@ function parseTag(u, c) {
   return { u, ctr: parseInt(c, 16) };
 }
 
-// Accepts /tap?id=<UID>x<COUNTER> (both mirrors back to back) or /tap?u=<UID>&c=<COUNTER>.
+// NXP TagWriter appends ?UID=<14 hex>x<6 hex counter> when both mirrors are on.
+// Also accepts UID plus a separate ctr, and the older u= and c= format.
 function tagFromUrl(url) {
-  const id = (url.searchParams.get("id") || "").toUpperCase();
-  if (id) {
-    const m = id.match(/^([0-9A-F]{14})X([0-9A-F]{6})$/);
-    return m ? parseTag(m[1], m[2]) : null;
-  }
-  return parseTag(url.searchParams.get("u"), url.searchParams.get("c"));
+  const p = url.searchParams;
+  const raw = (p.get("UID") || p.get("uid") || p.get("id") || "").toUpperCase();
+  const m = raw.match(/^([0-9A-F]{14})(?:X([0-9A-F]{6}))?$/);
+  if (m) return parseTag(m[1], m[2] || p.get("ctr") || p.get("c"));
+  return parseTag(p.get("u"), p.get("c"));
 }
 
 async function tapGet(req, env, url) {
