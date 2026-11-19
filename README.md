@@ -33,6 +33,6 @@ Older `?id=`, `?u=...&c=...` formats are also accepted.
     -- unlink a phone (new phone, wrong name)
     DELETE FROM devices WHERE name = 'RA Name';
 
-    -- add or remove staff
+    -- add or remove staff (report = 0 lets someone tap without appearing in the report)
     INSERT INTO staff (name) VALUES ('RA Name');
     DELETE FROM staff WHERE name = 'RA Name';

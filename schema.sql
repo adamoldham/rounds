@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS staff (
-  name TEXT PRIMARY KEY
+  name TEXT PRIMARY KEY,
+  report INTEGER NOT NULL DEFAULT 1 -- 1 = appears in the nightly report, 0 = can tap but is not reported
 );
 
 CREATE TABLE IF NOT EXISTS stickers (

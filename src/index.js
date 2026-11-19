@@ -171,7 +171,7 @@ async function admin(req, env, url) {
 
   const taps = (await env.DB.prepare("SELECT * FROM taps WHERE night=? ORDER BY ts").bind(night).all()).results;
   const stickers = (await env.DB.prepare("SELECT location,building FROM stickers ORDER BY building,location").all()).results;
-  const staff = (await env.DB.prepare("SELECT name FROM staff ORDER BY name").all()).results.map((r) => r.name);
+  const staff = (await env.DB.prepare("SELECT name FROM staff WHERE report=1 ORDER BY name").all()).results.map((r) => r.name);
 
   const bld = {};
   for (const s of stickers) (bld[s.building] ||= []).push(s.location);
