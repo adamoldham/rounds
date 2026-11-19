@@ -295,10 +295,11 @@ async function admin(req, env, url) {
   for (const t of taps) (byName[t.name] ||= []).push(t);
 
   let rows = "";
+  let idleRows = "";
   for (const name of staff) {
     const ts = byName[name] || [];
     if (!ts.length) {
-      rows += `<tr><td>${esc(name)}</td><td colspan="3" class="bad">No taps</td></tr>`;
+      idleRows += `<tr><td>${esc(name)}</td><td colspan="3" class="bad">No taps</td></tr>`;
       continue;
     }
     for (const b of Object.keys(bld)) {
@@ -332,12 +333,12 @@ async function admin(req, env, url) {
     `<h1>Night rounds</h1>
 <p class="meta">Night of ${esc(pretty)}</p>
 <div class="toolbar"><div class="seg"><a href="${link(shift(-1))}">Previous night</a><a href="${link(shift(1))}">Next night</a></div><a class="signout" href="/admin?logout=1">Sign out</a></div>
-<div class="section-head"><h2>Rounds</h2></div>
-<div class="data-wrap"><table class="data"><thead><tr><th>RA</th><th>Building</th><th>Round 1</th><th>Round 2</th></tr></thead><tbody>${rows}</tbody></table></div>
+<div class="section-head"><h2>All taps</h2></div>
+<div class="data-wrap"><table class="data"><thead><tr><th>Time</th><th>RA</th><th>Location</th><th>Round</th><th>IP</th></tr></thead><tbody>${raw || '<tr><td colspan="5">No taps yet</td></tr>'}</tbody></table></div>
 <div class="section-head"><h2>Flags</h2></div>
 ${flags.length ? '<div class="notice"><ul>' + flags.map((f) => `<li>${esc(f)}</li>`).join("") + "</ul></div>" : '<p class="status">None</p>'}
-<div class="section-head"><h2>All taps</h2></div>
-<div class="data-wrap"><table class="data"><thead><tr><th>Time</th><th>RA</th><th>Location</th><th>Round</th><th>IP</th></tr></thead><tbody>${raw || '<tr><td colspan="5">No taps yet</td></tr>'}</tbody></table></div>`,
+<div class="section-head"><h2>Rounds</h2></div>
+<div class="data-wrap"><table class="data"><thead><tr><th>RA</th><th>Building</th><th>Round 1</th><th>Round 2</th></tr></thead><tbody>${rows}${idleRows}</tbody></table></div>`,
     200, {}, true
   );
 }
