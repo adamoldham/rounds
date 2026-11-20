@@ -3,9 +3,9 @@
 
 const TZ = "America/New_York";
 // Minutes since 00:00 of the evening a duty night starts. After midnight counts as +24h.
-const NIGHT_START = 21 * 60; // 9:00 PM
-const ROUND1_END = 24 * 60 + 30; // 12:30 AM, split between round 1 and round 2
-const NIGHT_END = 30 * 60; // 6:00 AM
+const NIGHT_START = 18 * 60; // 6:00 PM
+const ROUND1_END = 23 * 60; // 11:00 PM, split between round 1 and round 2
+const NIGHT_END = 27 * 60; // 3:00 AM
 const FRESH_MS = 120000; // time allowed between the tap and choosing a name
 const FAST_GAP_SECONDS = 25; // flag different floors tapped faster than this
 const REPEAT_FLAG_MIN = 2; // flag a sticker tapped this many times by one RA in one round
