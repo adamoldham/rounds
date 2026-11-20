@@ -172,7 +172,7 @@ async function tapGet(req, env, url) {
   if (tag.ctr === 0) return html(msg("Tap again", "The counter read 0. If this keeps happening, the counter mirror is not enabled."), 400);
 
   const st = await env.DB.prepare("SELECT * FROM stickers WHERE uid=?").bind(tag.u).first();
-  if (!st) return html(msg("Unknown sticker", "This sticker is not registered."), 404);
+  if (!st) return html(msg("Unknown sticker", `UID ${tag.u}. This sticker is not registered.`), 404);
 
   const now = Date.now();
   const r = await env.DB.prepare("UPDATE stickers SET last_ctr=?1, last_seen_at=?2 WHERE uid=?3 AND last_ctr<?1")
